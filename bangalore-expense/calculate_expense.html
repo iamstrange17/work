@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculate Expense</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg,#0c0c0c, #ea0505,#0c0c0c);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    nav {
+      width: 100%;
+      background: #0c0c0c;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    nav .logo {
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    nav ul li a:hover {
+      color: #ea0505;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      margin: 2rem auto;
+      border-radius: 8px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #ea0505;
+      margin-bottom: 1.5rem;
+    }
+    .result {
+      font-size: 1.1rem;
+      margin: 1rem 0;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      background: linear-gradient(135deg, #0c0c0c, #ea0505, #0c0c0c);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #b80000;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Bangalore Expense</div>
+    <ul>
+      <li><a href="main.html">Dashboard</a></li>
+      <li><a href="view_expense.html">View Expense</a></li>
+    </ul>
+  </nav>
+  <div class="container">
+    <h2>Expense Calculation</h2>
+    <div id="summary" class="result"></div>
+    <div id="settlement" class="result"></div>
+    <button id="clearData">All Settlement Done</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { getDatabase, ref, get, child, remove } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJnzVZUNlZ2KtNA0CnV5CwLW3Ns5MTbGk",
+      authDomain: "my-project-2c6e6.firebaseapp.com",
+      databaseURL: "https://my-project-2c6e6-default-rtdb.firebaseio.com",
+      projectId: "my-project-2c6e6",
+      storageBucket: "my-project-2c6e6.appspot.com",
+      messagingSenderId: "478011472175",
+      appId: "1:478011472175:web:1e55a10a84dce1e95709da"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const summaryEl = document.getElementById('summary');
+    const settlementEl = document.getElementById('settlement');
+    const clearBtn = document.getElementById('clearData');
+
+    async function calculate() {
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef, 'expenses'));
+
+      if (!snapshot.exists()) {
+        summaryEl.innerHTML = "No expense data found.";
+        return;
+      }
+
+      const data = snapshot.val();
+      const paid = { Muthu: 0, Simpu: 0, Thamu: 0 };
+      let total = 0;
+
+      Object.values(data).forEach(exp => {
+        const name = exp.name;
+        if (paid[name] !== undefined) {
+          paid[name] += parseFloat(exp.amount);
+          total += parseFloat(exp.amount);
+        }
+      });
+
+      const perPerson = total / 3;
+
+      summaryEl.innerHTML = `
+        <strong>Total Expense:</strong> ₹${total.toFixed(2)}<br>
+        <strong>Muthu Paid:</strong> ₹${paid.Muthu.toFixed(2)}<br>
+        <strong>Simpu Paid:</strong> ₹${paid.Simpu.toFixed(2)}<br>
+        <strong>Thamu Paid:</strong> ₹${paid.Thamu.toFixed(2)}<br>
+        <strong>Each Should Pay:</strong> ₹${perPerson.toFixed(2)}
+      `;
+
+      const balance = {
+        Muthu: paid.Muthu - perPerson,
+        Simpu: paid.Simpu - perPerson,
+        Thamu: paid.Thamu - perPerson
+      };
+
+      let settlements = "";
+
+      const creditors = Object.entries(balance).filter(([_, val]) => val > 0);
+      const debtors = Object.entries(balance).filter(([_, val]) => val < 0);
+
+      debtors.forEach(([debtor, dBal]) => {
+        creditors.forEach(([creditor, cBal]) => {
+          if (dBal === 0 || cBal === 0) return;
+          const amount = Math.min(Math.abs(dBal), cBal);
+          settlements += `${debtor} should pay ₹${amount.toFixed(2)} to ${creditor}<br>`;
+          balance[debtor] += amount;
+          balance[creditor] -= amount;
+        });
+      });
+
+      settlementEl.innerHTML = settlements || "No settlements needed.";
+    }
+
+    calculate();
+
+    clearBtn.addEventListener('click', async () => {
+      const confirmed = confirm("Are you sure you want to clear all data?");
+      if (!confirmed) return;
+
+      try {
+        await remove(ref(db, 'expenses'));
+        alert("All expenses cleared.");
+        window.location.reload();
+      } catch (error) {
+        alert("Error clearing data: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>

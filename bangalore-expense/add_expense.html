@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Expense</title>
+  <style>
+    /* Your existing CSS here */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg,#0c0c0c, #ea0505,#0c0c0c);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    nav {
+      width: 100%;
+      background: #0c0c0c;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    nav .logo {
+      font-weight: 700;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+    }
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 1.5rem;
+    }
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    nav ul li a:hover {
+      color: #ea0505;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      border-radius: 8px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      margin-top: 2rem;
+      margin-bottom: 3rem;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #ea0505;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      display: block;
+      color: #333;
+    }
+    input[type="date"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      font-size: 1rem;
+      border: 1.8px solid #ccc;
+      border-radius: 5px;
+      transition: border-color 0.3s ease;
+    }
+    input[type="date"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: #ea0505;
+      outline: none;
+      box-shadow: 0 0 5px #ea0505aa;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.8rem 0;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, #0c0c0c, #ea0505, #0c0c0c);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.4s ease;
+      width: 100%;
+    }
+    button:hover {
+      background: #b80000;
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 1.5rem;
+      }
+      button {
+        font-size: 1rem;
+      }
+      nav {
+        padding: 1rem;
+      }
+      nav ul {
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Bangalore Expense</div>
+    <ul>
+      <li><a href="main.html">Dashboard</a></li>
+      <li><a href="view_expense.html">View Expense</a></li>
+      <li><a href="#" id="logout-link">Logout</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <h2>Add Expense</h2>
+    <form id="addExpenseForm">
+      <div>
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" required />
+      </div>
+      <div>
+        <label for="item">Select Item</label>
+        <select id="item" name="item" required>
+          <option value="" disabled selected>Select an item</option>
+          <option value="food">Food</option>
+          <option value="travel">Travel</option>
+          <option value="office">Office Supplies</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label for="amount">Amount</label>
+        <input type="number" id="amount" name="amount" placeholder="Enter amount" min="0" step="0.01" required />
+      </div>
+      <div>
+        <label for="name">Select Name</label>
+        <select id="name" name="name" required>
+          <option value="" disabled selected>Select a name</option>
+          <option value="Muthu">Muthu</option>
+          <option value="Simpu">Simpu</option>
+          <option value="Thamu">Thamu</option>
+        </select>
+      </div>
+      <button type="submit">Submit Expense</button>
+    </form>
+  </div>
+
+  <script type="module">
+    // Import Firebase SDK functions for app and database
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+
+    // Your Firebase config - add your actual keys here
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJnzVZUNlZ2KtNA0CnV5CwLW3Ns5MTbGk",
+      authDomain: "my-project-2c6e6.firebaseapp.com",
+      databaseURL: "https://my-project-2c6e6-default-rtdb.firebaseio.com",  // Add your Realtime Database URL here
+      projectId: "my-project-2c6e6",
+      storageBucket: "my-project-2c6e6.appspot.com",
+      messagingSenderId: "478011472175",
+      appId: "1:478011472175:web:1e55a10a84dce1e95709da"
+    };
+
+    // Initialize Firebase app and database
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // On window load, setup form submission
+    window.onload = () => {
+      const form = document.getElementById('addExpenseForm');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Get form values
+        const date = form.date.value;
+        const item = form.item.value;
+        const amount = parseFloat(form.amount.value);
+        const name = form.name.value;
+
+        if (!date || !item || !amount || !name) {
+          alert("Please fill all fields");
+          return;
+        }
+
+        // Prepare expense object
+        const expense = {
+          date,
+          item,
+          amount,
+          name,
+          timestamp: Date.now()
+        };
+
+        try {
+          // Push expense to 'expenses' node in your database
+          await push(ref(database, 'expenses'), expense);
+          alert("Expense submitted successfully!");
+          form.reset();
+        } catch (error) {
+          alert("Error submitting expense: " + error.message);
+        }
+      });
+    };
+  </script>
+</body>
+</html>

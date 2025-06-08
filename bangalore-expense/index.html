@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bangalore Expense - Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0c0c0c, #ea0505, black);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      background: rgb(166, 159, 159);
+      padding: 2rem 3rem;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(13, 12, 12, 0.929);
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      margin-bottom: 1.2rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .show-password {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    .show-password input {
+      margin-right: 0.5rem;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      padding: 0.7rem;
+      background-color: #0f0f0f;
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: red;
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 1rem;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Login</h1>
+    <div id="error-message" class="error">Invalid username or password</div>
+    <form id="login-form" autocomplete="off">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required />
+
+      <div class="show-password">
+        <input type="checkbox" id="togglePassword" />
+        <label for="togglePassword">Show Password</label>
+      </div>
+
+      <input type="submit" value="Login" />
+    </form>
+  </div>
+
+  <script>
+    const validUsers = ["muthu", "simpu", "thamu"];
+
+    // Attach event to checkbox AFTER DOM is loaded
+    document.getElementById("togglePassword").addEventListener("change", function () {
+      const passwordField = document.getElementById("password");
+      passwordField.type = this.checked ? "text" : "password";
+    });
+
+    document.getElementById("login-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (validUsers.includes(username) && password === `${username}@123`) {
+        window.location.href = `main.html?username=${encodeURIComponent(username)}`;
+      } else {
+        document.getElementById("error-message").style.display = "block";
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+
+        const toggleCheckbox = document.getElementById("togglePassword");
+        toggleCheckbox.checked = false;
+        document.getElementById("password").type = "password";
+      }
+    });
+  </script>
+</body>
+</html>

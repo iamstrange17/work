@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>View Expense</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg,#0c0c0c, #ea0505,#0c0c0c);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    nav {
+      width: 100%;
+      background: #0c0c0c;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    nav .logo {
+      font-weight: 700;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+    }
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 1.5rem;
+    }
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    nav ul li a:hover {
+      color: #ea0505;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      max-width: 800px;
+      width: 90%;
+      border-radius: 8px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      margin-top: 2rem;
+      margin-bottom: 3rem;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #ea0505;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    form div {
+      flex: 1 1 45%;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    input[type="date"], select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1.8px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      background: linear-gradient(135deg, #0c0c0c, #ea0505, #0c0c0c);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #b80000;
+    }
+    .total {
+      margin-bottom: 1rem;
+      font-weight: bold;
+      color: #080808;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      display: none;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    th {
+      background-color: #0c0c0c;
+      color: white;
+    }
+    @media (max-width: 600px) {
+      form div {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Bangalore Expense</div>
+    <ul>
+      <li><a href="main.html">Dashboard</a></li>
+      <li><a href="add_expense.html">Add Expense</a></li>
+      <li><a href="#" id="logout-link">Logout</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <h2>View Expense</h2>
+    
+    <!-- New: Overall Total Display -->
+    <div class="total" id="overallLabel">Overall Total Expense: ₹<span id="overallAmount">0</span></div>
+
+    <form id="filterForm">
+      <div>
+        <label for="from">From Date</label>
+        <input type="date" id="from" name="from" required />
+      </div>
+      <div>
+        <label for="to">To Date</label>
+        <input type="date" id="to" name="to" required />
+      </div>
+      <div>
+        <label for="name">Select Name</label>
+        <select id="name" name="name" required>
+          <option value="" disabled selected>Select a name</option>
+          <option value="Muthu">Muthu</option>
+          <option value="Simpu">Simpu</option>
+          <option value="Thamu">Thamu</option>
+        </select>
+      </div>
+      <button type="submit">Filter</button>
+    </form>
+
+    <div class="total" id="totalLabel">Total Expense for User: ₹<span id="totalAmount">0</span></div>
+
+    <table id="expenseTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Item</th>
+          <th>Amount</th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJnzVZUNlZ2KtNA0CnV5CwLW3Ns5MTbGk",
+      authDomain: "my-project-2c6e6.firebaseapp.com",
+      databaseURL: "https://my-project-2c6e6-default-rtdb.firebaseio.com",
+      projectId: "my-project-2c6e6",
+      storageBucket: "my-project-2c6e6.appspot.com",
+      messagingSenderId: "478011472175",
+      appId: "1:478011472175:web:1e55a10a84dce1e95709da"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const filterForm = document.getElementById('filterForm');
+    const tableBody = document.getElementById('tableBody');
+    const expenseTable = document.getElementById('expenseTable');
+    const totalAmountEl = document.getElementById('totalAmount');
+    const overallAmountEl = document.getElementById('overallAmount');
+
+    async function calculateOverallTotal() {
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef, 'expenses'));
+      let total = 0;
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        Object.values(data).forEach(exp => {
+          total += parseFloat(exp.amount);
+        });
+      }
+
+      overallAmountEl.textContent = total.toFixed(2);
+    }
+
+    calculateOverallTotal(); // Show on page load
+
+    filterForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const from = new Date(document.getElementById('from').value);
+      const to = new Date(document.getElementById('to').value);
+      const name = document.getElementById('name').value;
+
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef, 'expenses'));
+
+      tableBody.innerHTML = '';
+      let total = 0;
+      let hasData = false;
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        Object.values(data).forEach(exp => {
+          const expDate = new Date(exp.date);
+          if (exp.name === name && expDate >= from && expDate <= to) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${exp.date}</td>
+              <td>${exp.item}</td>
+              <td>₹${parseFloat(exp.amount).toFixed(2)}</td>
+              <td>${exp.name}</td>
+            `;
+            tableBody.appendChild(row);
+            total += parseFloat(exp.amount);
+            hasData = true;
+          }
+        });
+      }
+
+      totalAmountEl.textContent = total.toFixed(2);
+      document.getElementById('totalLabel').innerHTML = `Total Expense for ${name.charAt(0).toUpperCase() + name.slice(1)}: ₹<span id="totalAmount">${total.toFixed(2)}</span>`;
+      expenseTable.style.display = hasData ? 'table' : 'none';
+    });
+  </script>
+</body>
+</html>
